@@ -1,1 +1,1 @@
-Playbook collection vor various tasks and operating systems
+Playbook collection for various tasks and operating systems
