@@ -1,0 +1,49 @@
+---
+- hosts: all
+
+  tasks:
+  - name: Update package cache
+    apt: 
+      update_cache=yes
+
+  - name: List packages to upgrade (1)
+    shell: apt list --upgradable
+    register: upgrades
+
+  - name: List packages to upgrade (2)
+    debug: msg="{{upgrades.stdout_lines[1:]}}"
+
+  - name: Upgrade packages
+    apt: 
+      upgrade=safe
+
+  - name: List services which need a restart (1)
+    shell: needrestart -r l -k -l -u NeedRestart::UI::stdio
+    register: restarts
+
+  - name: List services which need a restart (2)
+    debug: msg="{{restarts.stdout_lines}}"
+
+  - name: Checking running kernel version (1/2)
+    shell: uname -v | awk '{print $4}'
+    register: used_kernel
+
+  - name: Checking installed kernel version (2/2)
+    shell: dpkg -l | grep "linux-image-[0-9]" | awk {'print $3'} | sort -r | head -n 1
+    register: installed_kernel
+
+  - name: Newer kernel available -> Please reboot the system!
+    debug: msg="Newer kernel installed {{ installed_kernel.stdout_lines }} - {{ used_kernel.stdout_lines }}"
+    when: used_kernel.stdout != installed_kernel.stdout
+
+  - name: Remove unneeded packages (1)
+    apt:
+      autoremove: yes
+    register: autoremove
+
+  - name: Remove unneeded packages (2)
+    debug: msg="{{autoremove.stdout_lines}}"
+
+  - name: Clean local package repository
+    apt:
+      autoclean: yes
