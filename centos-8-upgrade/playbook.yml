@@ -1,0 +1,43 @@
+---
+- hosts: all
+
+  tasks:
+  - name: (CentOS 8) Update package cache
+    dnf: 
+      update_cache=yes
+
+  - name: (CentOS 8) List packages to upgrade (1)
+    shell: dnf list --upgrades
+    register: upgrades
+
+  - name: (CentOS 8) List packages to upgrade (2)
+    debug: msg="{{upgrades.stdout_lines[1:]}}"
+
+  - name: (CentOS 8) Upgrade packages
+    dnf:
+      name: "*"
+      state: latest 
+
+  - name: (CentOS 8) List services which need a restart (1)
+    shell: needs-restarting
+    register: restarts
+       
+  - name: (CentOS 8) List services which need a restart (2)
+    debug: msg="{{restarts.stdout_lines}}"
+
+  - name: Checking running kernel version (1/2)
+    shell: uname -r
+    register: used_kernel
+
+  - name: Checking installed kernel version (2/2)
+    shell: rpm -qa | grep "kernel-[0-9]" | sort -r | head -n 1 | cut -c 8-
+    register: installed_kernel
+
+  - name: Newer kernel available -> Please reboot the system!
+    debug: msg="Newer kernel installed {{ installed_kernel.stdout_lines }} - {{ used_kernel.stdout_lines }}"
+    when: used_kernel.stdout != installed_kernel.stdout
+
+  - name: (CentOS 8) Remove unneeded packages
+    dnf:
+      autoremove: yes
+    register: autoremove
