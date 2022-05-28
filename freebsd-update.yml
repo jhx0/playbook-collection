@@ -1,0 +1,23 @@
+- hosts: localhost
+  become: yes
+  become_user: root
+
+  tasks:
+    - name: Upgrading via freebsd-update
+      shell: freebsd-update cron install
+
+    - name: Updating package cache
+      shell: pkg update
+
+    - name: Upgrading packages
+      shell: pkg upgrade
+
+    - name: Removing unneeded packages
+      shell: pkg autoremove
+
+    - name: Show vulnerable packages (1/2)
+      shell: pkg audit -F; exit 0
+      register: audit
+
+    - name: Show vulnerable packages (Output) (2/2)
+      debug: msg="{{ audit.stdout.split('\n') }}"

@@ -1,0 +1,18 @@
+- hosts: localhost
+  become: yes
+  become_user: root
+
+  tasks:
+    - name: Running Syspatch (1/2)
+      shell: syspatch
+      register: syspatch
+
+    - name: Running Syspatch (Output) (2/2)
+      debug: msg="{{ syspatch.stdout.split('\n') }}"
+
+    - name: Upgrading packages (1/2)
+      shell: pkg_add -u
+      register: pkgupgrades
+
+    - name: Upgrading packages (Output) (2/2)
+      debug: msg="{{ pkgupgrades.stdout.split('\n') }}"
